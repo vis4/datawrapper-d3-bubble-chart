@@ -27,19 +27,19 @@ While most of the core visualizations define the descriptor entirely in PHP (whi
 * [id](bubble-chart.json#L2) (bubble-chart) - unique id for the visualization
 * [title](bubble-chart.json#L3) ("Bubble Chart (d3)") - the module name as displayed in the editor
 * [libraries](bubble-chart.json#L4-L7) - array of third-party libraries that are used by this vis (optional)
-* [axes](bubble-chart.json#L8-L18) - the axes (or dimensions) provided by the visualization
-* [options](bubble-chart.json#L19-L41) - the config options displayed to the user
+* [axes](bubble-chart.json#L8-L18) - the axes (or dimensions) provided by the visualization. The bubble chart provides three axes for the bubble radius (size), fill (color) and label.
+* [options](bubble-chart.json#L19-L41) - the config options displayed to the user. In this case three options are defined for assigning the columns to each of the axes.
 
 ### Visualization JavaScript
 
-The JavaScript registers the new visualization to the JS core. The registered object must at least implement the ``render`` function.
+The JavaScript registers the new visualization to the JS core. The registered object must at least implement the ``render()`` function.
 
-```
-   dw.visualization.register('bubble-chart', {
+```javascript
+dw.visualization.register('bubble-chart', {
 
-        render: function($elelement) {
-            // render the visualization in the element el
-        }
+    render: function($elelement) {
+        // render the visualization inside $element
+    }
 
-    });
+});
 ```
