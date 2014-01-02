@@ -22,7 +22,7 @@ Visualization:
 
 ### Visualization descriptor
 
-While most of the core visualizations define the descriptor in PHP (which makes it easier to translate the title and options), in this case a simple JSON file is used which is then [parsed by the PHP class](plugin.php#L6).
+While most of the core visualizations define the descriptor entirely in PHP (which makes it easier to translate the title and options), in this case a simple JSON file is used which is then [parsed by the PHP class](plugin.php#L6).
 
 * [id](bubble-chart.json#L2) (bubble-chart) - unique id for the visualization
 * [title](bubble-chart.json#L3) ("Bubble Chart (d3)") - the module name as displayed in the editor
@@ -31,3 +31,15 @@ While most of the core visualizations define the descriptor in PHP (which makes 
 * [options](bubble-chart.json#L19-L41) - the config options displayed to the user
 
 ### Visualization JavaScript
+
+The JavaScript registers the new visualization to the JS core. The registered object must at least implement the ``render`` function.
+
+```
+   dw.visualization.register('bubble-chart', {
+
+        render: function($elelement) {
+            // render the visualization in the element el
+        }
+
+    });
+```
