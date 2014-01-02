@@ -9,8 +9,8 @@ Visualizations are provided by plugins, so you need to create a new plugin. A pl
 
 Plugin:
 
-* package.json - plugin descriptor and basically follows the same syntax as used by npm packages
-* plugin.php - plugin PHP class
+* [package.json](blob/master/package.json) - plugin descriptor and basically follows the same syntax as used by npm packages
+* [plugin.php](blob/master/plugin.php) - plugin PHP class
 
 Visualization:
 
