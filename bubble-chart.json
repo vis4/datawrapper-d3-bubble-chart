@@ -1,0 +1,42 @@
+{
+    "id": "bubble-chart",
+    "title": "Bubble Chart (d3)",
+    "libraries": [{
+        "local": "vendor/d3.min.js",
+        "cdn": "//cdnjs.cloudflare.com/ajax/libs/d3/3.3.11/d3.min.js"
+    }],
+    "axes": {
+        "label": {
+            "accepts": ["text", "date"]
+        },
+        "size": {
+            "accepts": ["number"]
+        },
+        "color": {
+            "accepts": ["number", "text"]
+        }
+    },
+    "options": {
+        "select-label": {
+            "type": "select-axis-column",
+            "axes": [{
+                "id": "label",
+                "label": "Label"
+            }]
+        },
+        "select-size": {
+            "type": "select-axis-column",
+            "axes": [{
+                "id": "size",
+                "label": "Size"
+            }]
+        },
+        "select-color": {
+            "type": "select-axis-column",
+            "axes": [{
+                "id": "color",
+                "label": "Color"
+            }]
+        }
+    }
+}

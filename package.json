@@ -1,0 +1,8 @@
+{
+    "name": "d3-bubble-chart",
+    "version": "1.0.0",
+    "dependencies": {
+        "core": "1.5.0",
+        "visualization": "*"
+    }
+}
