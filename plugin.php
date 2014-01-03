@@ -1,17 +1,18 @@
 <?php
 
-class DatawrapperPlugin_D3BubbleChart extends DatawrapperPlugin_Visualization {
+class DatawrapperPlugin_D3BubbleChart extends DatawrapperPlugin {
 
-    public function getMeta() {
+    public function init() {
 
-        return array(
+        $visMeta = array(
             /*
              * The unique visualization id (not to be confused with the plugin id)
              */
             "id" => "bubble-chart",
 
             /*
-             * The title displayed in the editor UI.
+             * The title displayed in the editor UI. Wrap in __() to make it
+             * localizable.
              */
             "title" => "Bubble Chart (d3)",
 
@@ -70,6 +71,8 @@ class DatawrapperPlugin_D3BubbleChart extends DatawrapperPlugin_Visualization {
                 )
             )
         );
+
+        DatawrapperVisualization::register($this, $visMeta);
     }
 
 }
