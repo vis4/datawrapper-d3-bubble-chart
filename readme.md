@@ -3,14 +3,42 @@
 
 This tutorial shows how you can new visualization modules to Datawrapper.
 
-Visualizations are provided by plugins, so you need to create a new plugin. A plugin can provide one or many visualizations at the same time.
+### The plugin
+
+The first thing we need is a plugin which will serve as 'host' for our visualization. In general a Datawrapper plugin needs just one single file, the plugin descriptor ([package.json](package.json)):
+
+```json
+{
+    "name": "d3-bubble-chart",
+    "version": "1.0.0",
+    "dependencies": {
+        "core": "1.5.0",
+        "visualization": "*"
+    }
+}
+```
+
+However, in this case the plugin wants to do a little more, so we need to give it a PHP class ([plugin.php](plugin.php)) that will be loaded and executed by the Datawrapper core.
+
+```php
+<?php
+
+class DatawrapperPlugin_D3BubbleChart extends DatawrapperPlugin_Visualization {
+
+    public function getMeta(){
+        $path = dirname(__FILE__) . DIRECTORY_SEPARATOR;
+        return json_decode(file_get_contents($path . "bubble-chart.json"), true);
+    }
+}
+```
+
 
 ### File structure
 
 Plugin:
 
-* [package.json](package.json) - plugin descriptor and basically follows the same syntax as used by npm packages
-* [plugin.php](plugin.php) - plugin PHP class
+*  - plugin descriptor and basically follows the same syntax as used by npm packages
+*  - plugin PHP class
 
 Visualization:
 
@@ -43,3 +71,7 @@ dw.visualization.register('bubble-chart', {
 
 });
 ```
+
+### Don't stop here
+
+But obviously what we achieved so far is nice but it's not enough to stop here. A visualization is a poor visualization if there is no way to read the actual values. So we could improve the bubble chart by adding a radius legend. If the radius is big enough we could (and should) also display the values directly inside the bubbles. And if we're using a color scale it would be help a lot to include a color legend, too. Finally we could make the visualization more useful by allowing the user to customize the color scale. Therefor we could re-use the gradient-selector plugin used by the map visualization.. And why not add support for IE7 and IE8 by using raphael.js for the rendering?
