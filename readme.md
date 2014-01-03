@@ -5,13 +5,15 @@ This tutorial shows how to add new visualization modules to Datawrapper. In this
 
 ![bubble chart](https://gist.github.com/mbostock/4063269/raw/5144eafeac9e298962133e9e31de45da21714108/thumbnail.png)
 
+Additionally to reading this tutorial you can also [check the commit history of this repository](https://github.com/datawrapper/tutorial-visualization/commits/master) to follow the individual steps.
+
 ### Creating the host plugin
 
 In general, to extend Datawrapper with new features you need to [create a plugin](https://github.com/datawrapper/datawrapper/wiki/Extending-Datawrapper). Plugins can do a lot of things, and adding new visualizations is just one of them.
 
 The plugins are stored inside the [``plugins``](https://github.com/datawrapper/datawrapper/tree/master/plugins) folder, so we create a new folder ``d3-bubble-chart`` for our plugin.
 
-Now you need to create the [package.json](package.json) file which provides some meta information about the plugin itself (very similar to NPM package.json). The attributes ``name`` and ``version`` are required. The ``name`` must be the same as the plugin folder name.
+Now you need to [create the package.json file](https://github.com/datawrapper/tutorial-visualization/commit/5cac9a2ccdafcd334f51aa73c492ca7dc9d7b7c6) which provides some meta information about the plugin itself (very similar to NPM package.json). The attributes ``name`` and ``version`` are required. The ``name`` must be the same as the plugin folder name.
 
 ```json
 {
@@ -20,7 +22,7 @@ Now you need to create the [package.json](package.json) file which provides some
 }
 ```
 
-As our plugin wants to provide a new visualization we need to create the plugin class [plugin.php](plugin.php). The plugin class will be loaded by Datawrapper and its ``init()`` function is invoked. 
+As our plugin wants to provide a new visualization we need to [create the plugin class plugin.php](https://github.com/datawrapper/tutorial-visualization/commit/22c5d5b494a37d38efb0c32accc12c61cb134c12). The plugin class will be loaded by Datawrapper and its ``init()`` function is invoked on every request.
 
 ```php
 <?php
@@ -33,14 +35,114 @@ class DatawrapperPlugin_D3BubbleChart extends DatawrapperPlugin {
 }
 ```
 
-Now the plugin is ready for installation. To do so you open a command line and run the following inside the Datawrapper root folder:
+By now the plugin is already ready for installation. To do so you open a command line and run the following inside the Datawrapper root folder:
 
 ```bash
 $ php scripts/plugin.php install d3-bubble-chart
 Installed plugin d3-bubble-chart.
 ```
 
-### Register a new visualization
+### Register the visualization
+
+To register the visualization we will execute a special core method ``DatawrapperVisualization::register``. It takes two arguments: the plugin that provides the visualization (``$this``) and an array with the visualization meta data (``$visMeta``).
+
+[We start easy](https://github.com/datawrapper/tutorial-visualization/commit/2a75fdb29ce4466ffab6043695721be675fcc44b) with just some basic meta information: the visualization ``id`` and the ``title`` that is displayed in the chart editor.
+
+```php
+<?php
+
+class DatawrapperPlugin_D3BubbleChart extends DatawrapperPlugin {
+
+    public function init(){
+        $visMeta = array(
+            "id" => "bubble-chart",
+            "title" => "Bubble Chart (d3)"
+        );
+        DatawrapperVisualization::register($this, $visMeta);
+    }
+}
+```
+
+### Define the visual axes
+
+At this point it's time to introduce the concept of axes we are using in Datawrapper. Axes (aka dimensions) are the visual properties that are later mapped to columns of the uploaded dataset. For example, an simple scatter plot would provide two axes for the x and y position of each dot, each of which would accept numerical values.
+
+In case of our bubble chart we at least need two axes for the bubble size and a label to be displayed on each bubble. The label axis accepts text and date columns while the size accepts only numerical columns.
+
+```php
+<?php
+
+class DatawrapperPlugin_D3BubbleChart extends DatawrapperPlugin {
+
+    public function init(){
+        $visMeta = array(
+            "id" => "bubble-chart",
+            "title" => "Bubble Chart (d3)",
+            "axes" => array(
+                "label" => array(
+                    "accepts" => array("text", "date")
+                ),
+                "size" => array(
+                    "accepts" => array("number")
+                )
+            )
+        );
+        DatawrapperVisualization::register($this, $visMeta);
+    }
+}
+```
+
+[Once the axes are defined](https://github.com/datawrapper/tutorial-visualization/commit/9f3797cfd019370132f2c81164d652228b033bd6) Datawrapper will automatically assign data columns to them when a new chart is created. The first text or date column is assigned to the ``label`` axis, and the first number column is assigned to the ``size`` column.
+
+### Prepare the visualization JavaScript
+
+At first we need to create the JavaScript file that is loaded with the chart. Like any plugin file that we want to be publicly accessible, we must be locate it in a sub-folder named ``static/``.
+
+It is important to name the file exactly after the visualization id you defined in the ``$visMeta`` array above, so in this case we would name it [bubble-chart.js](https://github.com/datawrapper/tutorial-visualization/tree/deea47fa54e93dac684506e48924962eb5986481/d3-bubble-chart/static).
+
+In the [base skeleton for the file](https://github.com/datawrapper/tutorial-visualization/blob/deea47fa54e93dac684506e48924962eb5986481/d3-bubble-chart/static/bubble-chart.js) we simply call the framework function ``dw.visualization.register`` to register it's code. As first argument we pass the visualization id and last second argument is an object with a function ``render()``.
+
+```javascript
+dw.visualization.register('bubble-chart', {
+
+    render: function($element, dataset, axes, theme) {
+        // render the visualization inside $element
+    }
+
+});
+```
+
+And this ``render`` function is where all our code will go into.
+
+### Code the visualization!
+
+Now it is the time where the actual fun starts, as we are switching to JavaScript to code our visualization. Let's begin with collecting and preparing the data.
+
+The bubble chart code (that we [adapted from this example](https://gist.github.com/mbostock/4063269)) expects the data in a structure like this:
+
+```json
+{
+    "children": [
+        { "label": "Bubble 1", "value": 123 },
+        { "label": "Bubble 2", "value": 234 }
+    ]
+}
+```
+
+To access the dataset.
+
+```javascript
+render: function($element, dataset, axes, theme) {
+    var data = { children: [] };
+    dataset.eachRow(function(i) {
+        data.children.push({
+            label: axes.label.val(i),
+            value: axes.size.val(i),
+            color: axes.color.val(i)
+        });
+    });
+}
+```
 
 Plugin:
 
@@ -69,15 +171,7 @@ Visualization:
 
 The JavaScript registers the new visualization to the JS core. The registered object must at least implement the ``render()`` function.
 
-```javascript
-dw.visualization.register('bubble-chart', {
 
-    render: function($elelement) {
-        // render the visualization inside $element
-    }
-
-});
-```
 
 ### Don't stop here
 
