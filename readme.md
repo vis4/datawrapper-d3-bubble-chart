@@ -1,41 +1,46 @@
 
 ## Adding visualization modules to Datawrapper
 
-This tutorial shows how you can new visualization modules to Datawrapper.
+This tutorial shows how to add new visualization modules to Datawrapper. In this example we are going to add a nice [D3.js bubble chart](http://bl.ocks.org/mbostock/4063269) so Datawrapper users can create them without writing a single line of code.
 
-### The plugin
+![bubble chart](https://gist.github.com/mbostock/4063269/raw/5144eafeac9e298962133e9e31de45da21714108/thumbnail.png)
 
-The first thing we need is a plugin which will serve as 'host' for our visualization. In general a Datawrapper plugin needs just one single file, the plugin descriptor ([package.json](package.json)):
+### Creating the host plugin
+
+In general, to extend Datawrapper with new features you need to [create a plugin](https://github.com/datawrapper/datawrapper/wiki/Extending-Datawrapper). Plugins can do a lot of things, and adding new visualizations is just one of them.
+
+The plugins are stored inside the [``plugins``](https://github.com/datawrapper/datawrapper/tree/master/plugins) folder, so we create a new folder ``d3-bubble-chart`` for our plugin.
+
+Now you need to create the [package.json](package.json) file which provides some meta information about the plugin itself (very similar to NPM package.json). The attributes ``name`` and ``version`` are required. The ``name`` must be the same as the plugin folder name.
 
 ```json
 {
     "name": "d3-bubble-chart",
-    "version": "1.0.0",
-    "dependencies": {
-        "core": "1.5.0",
-        "visualization": "*"
-    }
+    "version": "1.0.0"
 }
 ```
 
-However, in this case the plugin wants to do a little more, so we need to give it a PHP class ([plugin.php](plugin.php)) that will be loaded and executed by the Datawrapper core. To make life easier we added core plugin ([DatawrapperPlugin_Visualization](https://github.com/datawrapper/datawrapper/blob/master/plugins/visualization/plugin.php)) that you can extend. Now you just need to implement getMeta() which is called to get the visualization meta blob (described in the next section).
-
-While most of the core visualizations define the descriptor entirely in PHP (which makes it easier to translate the title and options), in this case a simple JSON file is used instead, which is then [parsed by the PHP class](plugin.php#L6).
+As our plugin wants to provide a new visualization we need to create the plugin class [plugin.php](plugin.php). The plugin class will be loaded by Datawrapper and its ``init()`` function is invoked. 
 
 ```php
 <?php
 
-class DatawrapperPlugin_D3BubbleChart extends DatawrapperPlugin_Visualization {
+class DatawrapperPlugin_D3BubbleChart extends DatawrapperPlugin {
 
-    public function getMeta(){
-        $path = dirname(__FILE__) . DIRECTORY_SEPARATOR;
-        return json_decode(file_get_contents($path . "bubble-chart.json"), true);
+    public function init(){
+        // do some stuff here
     }
 }
 ```
 
+Now the plugin is ready for installation. To do so you open a command line and run the following inside the Datawrapper root folder:
 
-### File structure
+```bash
+$ php scripts/plugin.php install d3-bubble-chart
+Installed plugin d3-bubble-chart.
+```
+
+### Register a new visualization
 
 Plugin:
 
