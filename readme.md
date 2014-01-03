@@ -164,7 +164,7 @@ var vis = d3.select($element.get(0)).append("svg")
 
 The other thing we change is the data. In our case we don't need to load an external JSON file so we don't need to wrap the visualization code inside a ``d3.json`` call. Also we don't use the ``d3.scale.category10`` palette yet as all our circles will have the same color.
 
-The full code at this point [can be found here](https://github.com/datawrapper/tutorial-visualization/blob/4fcdffc8b8b83b618a27970b4437f22b64fea6bf/d3-bubble-chart/static/bubble-chart.js). However, if we test the chart in Datawrapper we will experience an error saying: *Uncaught ReferenceError: d3 is not defined*. Of course we need to tell Datawrapper that our visualization depends on the third-party library D3.js.
+The full code at this point [can be found here](https://github.com/datawrapper/tutorial-visualization/blob/4fcdffc8b8b83b618a27970b4437f22b64fea6bf/d3-bubble-chart/static/bubble-chart.js). However, if we test the chart in Datawrapper we will experience an error saying: *Uncaught ReferenceError: d3 is not defined*. Obviously we yet need to tell Datawrapper that our visualization depends on the third-party library D3.js.
 
 ### Declaring dependencies to third-party libraries
 
@@ -181,41 +181,85 @@ After fixing the dependency the resulting chart should look something like this:
 
 ![output](http://vis4.net/tmp/bubble-chart-1.png)
 
-### Fitting the visualization to the chart
+### Fitting the visualization into the chart
 
-You might have noticed that at this point the visualization uses a fixed size, which is not what we want inside Datawrapper. 
+You might have noticed that at this point the visualization uses a fixed size, which is not what we want in Datawrapper. Instead we will call ``this.size()`` to get the width and height available for the chart and [use the smallest side as diameter](https://github.com/datawrapper/tutorial-visualization/commit/937973ed169a9b3888fe9601cc61b182f9726dd6).
 
+```javascript
+var size = this.size(),  // returns array [width, height]
+    diameter = Math.min(size[0], size[1]);
+```
 
+### Using the theme colors
 
-Plugin:
+Next thing we do is to re-use the colors defined in the currently selected theme, so our bubble chart will fit into the design. So instead of the [fixed color](https://github.com/datawrapper/tutorial-visualization/blob/937973ed169a9b3888fe9601cc61b182f9726dd6/d3-bubble-chart/static/bubble-chart.js#L52) *"#ccc"* we are going to [take the first color](https://github.com/datawrapper/tutorial-visualization/commit/bd3a3fdc17127f80a85e819f40f3a00f042306cd) of the theme's palette.
 
-*  - plugin descriptor and basically follows the same syntax as used by npm packages
-*  - plugin PHP class
+```javascript
+node.append("circle")
+    .attr("r", function(d) { return d.r; })
+    .style("fill", theme.colors.palette[0]);
+```
 
-Visualization:
+To ensure that the labels remain readable it's a good idea to [check the Lab-lightness of the selected color](https://github.com/datawrapper/tutorial-visualization/commit/ab7b452ebf5f333edf28cc73d94b043f458df713).
 
-* [bubble-chart.json](bubble-chart.json) - visualization descriptor
-* static/[bubble-chart.js](static/bubble-chart.js) - JavaScript code that runs the visualization
-* static/[bubble-chart.css](static/bubble-chart.css) - CSS code to support
-* static/[bubble-chart.svg](static/bubble-chart.svg) - visualization icon
-* static/vendor/d3.min.js - D3.js library
+### Putting stylesheets into separate file
 
-### Visualization descriptor
+At this point our code is already infiltrated with style definitions that would better fit into a separate CSS file. Datawrapper makes this very easy by automatically including the CSS files named after the visualization id. So in our case we simply [add a file ``bubble-chart.css``](https://github.com/datawrapper/tutorial-visualization/commit/435fbbecf8b583f40e8fda94376d2996b7e11bec) into the ``static/`` folder and that's it.
 
+Then we can remove the ``.style()`` call and [instead use a CSS class](https://github.com/datawrapper/tutorial-visualization/commit/c9edf2746b58ecbfb19255f4981a94ddd519d837) to invert the labels.
 
+By now the visualization looks something like this:
 
-* [id](bubble-chart.json#L2) (bubble-chart) - unique id for the visualization
-* [title](bubble-chart.json#L3) ("Bubble Chart (d3)") - the module name as displayed in the editor
-* [libraries](bubble-chart.json#L4-L7) - array of third-party libraries that are used by this vis (optional)
-* [axes](bubble-chart.json#L8-L18) - the axes (or dimensions) provided by the visualization. The bubble chart provides three axes for the bubble radius (size), fill (color) and label.
-* [options](bubble-chart.json#L19-L41) - the config options displayed to the user. In this case three options are defined for assigning the columns to each of the axes.
+![output](http://vis4.net/tmp/bubble-chart-2.png)
 
-### Visualization JavaScript
+### Make the visualization customizable
 
-The JavaScript registers the new visualization to the JS core. The registered object must at least implement the ``render()`` function.
+As you know, the visualizations in Datawrapper usually can be customized by the user in some ways. Therefor the visualization can define a set of *options* that will be rendered as UI controls in the chart editor.
 
+Let's say we want to allow users to turn off the bubble labels. All we need to do is to [add the following line](https://github.com/datawrapper/tutorial-visualization/commit/0502c7bc664f1c747cab930faf6f2cfdc4ba4c35
+) to the visualization meta definition and wrap the code that renders the labels [in an IF-statement](https://github.com/datawrapper/tutorial-visualization/blob/0502c7bc664f1c747cab930faf6f2cfdc4ba4c35/d3-bubble-chart/static/bubble-chart.js#L54-L64). To get the current setting we can use ``this.get('show-labels')``.
+
+    "options" => array(
+        "show-labels" => array(
+            "type" => "checkbox",
+            "label" => "Show bubble labels",
+            "default" => true
+        )
+    )
+
+Now the sidebar we see our new checkbox, and after unchecking it the labels disappear.
+    
+![output](http://vis4.net/tmp/bubble-chart-3.png)
+
+### Allow highlighting of elements
+
+Another nice feature of Datawrapper is the ability to highlight certain elements of a visualization. This is very easy to integrate into a visualization using two little steps.
+
+At first we need to define which of our axes is storing the *unique identifiers* in our dataset. In our case this is the axis ``label``, so we set the attribute ``highlight-key`` to "label" [in the visualization meta attributes](https://github.com/datawrapper/tutorial-visualization/commit/e2714f77e5305a393731de5581c4afd8aadecbba).
+
+As second we need to alter the visualization code to check if a given element is highlighted, and then change the appearance accordingly. To make it easy we just change the default opacity of the circles to 50% and resetting it to 100% for all highlighted elements. All this can be done in CSS:
+
+```css
+.node circle { opacity: 0.5; }
+.node.highlighted circle { opacity: 1; }
+```
+
+Next we need to [assign the class "highlighted"](https://github.com/datawrapper/tutorial-visualization/blob/95564b7f61cb17850e48b583e314c32813cf1b1a/d3-bubble-chart/static/bubble-chart.js#L40-L42) to all highlighted elements. To do so we can use the function ``chart.isHighlighted(key)``. Note that if no element is highlighted at all this function will return true for all elements.
+
+And again, that's it. Now we can select elements in the chart editor and the remaining elements will be faded out a little bit:
+
+![output](http://vis4.net/tmp/bubble-chart-4.png)
 
 
 ### Don't stop here
 
-But obviously what we achieved so far is nice but it's not enough to stop here. A visualization is a poor visualization if there is no way to read the actual values. So we could improve the bubble chart by adding a radius legend. If the radius is big enough we could (and should) also display the values directly inside the bubbles. And if we're using a color scale it would be help a lot to include a color legend, too. Finally we could make the visualization more useful by allowing the user to customize the color scale. Therefor we could re-use the gradient-selector plugin used by the map visualization.. And why not add support for IE7 and IE8 by using raphael.js for the rendering?
+For this tutorial this should be enough to demonstrate how you can add new visualization modules to Datawrapper. As you have seen, the integration of an existing D3.js visualization is pretty straight-forward, and can be done within a few minutes.
+
+However, while what we achieved so far is certainly nice, a lot more work is needed to get the bubble chart to Datawrapper chart quality. This is something that is easy to be forgotten: a good chart consists of way more than just a few bubbles and some text.
+
+To give a few ideas about what is missing:
+
+* The actual values are not displayed in the bubble chart. A radius legend or direct labeling of large bubbles would help!
+* Simply truncating labels according to the radius is not very smart. It would be better to let the labels break into several lines.
+* We could allow users to customize the colors for the bubbles, either using the built-in color picker in Datawrapper or by adding another axis for data-driven coloring (as is it used in the map module).
+* Finally, we could improve backward compatibility by using Raphael.js or plain HTML instead of SVG.
