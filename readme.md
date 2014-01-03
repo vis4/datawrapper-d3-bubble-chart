@@ -18,7 +18,9 @@ The first thing we need is a plugin which will serve as 'host' for our visualiza
 }
 ```
 
-However, in this case the plugin wants to do a little more, so we need to give it a PHP class ([plugin.php](plugin.php)) that will be loaded and executed by the Datawrapper core.
+However, in this case the plugin wants to do a little more, so we need to give it a PHP class ([plugin.php](plugin.php)) that will be loaded and executed by the Datawrapper core. To make life easier we added core plugin ([DatawrapperPlugin_Visualization](https://github.com/datawrapper/datawrapper/blob/master/plugins/visualization/plugin.php)) that you can extend. Now you just need to implement getMeta() which is called to get the visualization meta blob (described in the next section).
+
+While most of the core visualizations define the descriptor entirely in PHP (which makes it easier to translate the title and options), in this case a simple JSON file is used instead, which is then [parsed by the PHP class](plugin.php#L6).
 
 ```php
 <?php
@@ -50,7 +52,7 @@ Visualization:
 
 ### Visualization descriptor
 
-While most of the core visualizations define the descriptor entirely in PHP (which makes it easier to translate the title and options), in this case a simple JSON file is used which is then [parsed by the PHP class](plugin.php#L6).
+
 
 * [id](bubble-chart.json#L2) (bubble-chart) - unique id for the visualization
 * [title](bubble-chart.json#L3) ("Bubble Chart (d3)") - the module name as displayed in the editor
