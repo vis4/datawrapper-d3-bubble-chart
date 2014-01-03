@@ -114,7 +114,7 @@ dw.visualization.register('bubble-chart', {
 
 And this ``render`` function is where all our code will go into.
 
-### Code the visualization!
+### Prepare the dataset
 
 Now it is the time where the actual fun starts, as we are switching to JavaScript to code our visualization. Let's begin with collecting and preparing the data.
 
@@ -129,20 +129,63 @@ The bubble chart code (that we [adapted from this example](https://gist.github.c
 }
 ```
 
-To access the dataset.
+To access the chart's dataset we can use the references to the ``dataset`` and the chart ``axes``.
 
 ```javascript
 render: function($element, dataset, axes, theme) {
+    // create the empty structure
     var data = { children: [] };
+    // loop over each row in our dataset
     dataset.eachRow(function(i) {
+        // append new objects for each row
+        // with the values from the axes
         data.children.push({
             label: axes.label.val(i),
-            value: axes.size.val(i),
-            color: axes.color.val(i)
+            value: axes.size.val(i)
         });
     });
 }
 ```
+
+To see if this works we can output the data using ``console.log``. At this point it's a good idea to actually create a chart with some test data so we can test our code.
+
+![console output](http://vis4.net/tmp/bubble-chart-console-log.png)
+
+### Code the visualization!
+
+To code the visualization we start by adapting the bubble chart example [kindly provided by Mike Bostock](https://gist.github.com/mbostock/4063269). One thing we have to change is the selector to which we append the svg element. Instead of selecting the body we will use the ``$element`` instance (which happens to be a jQuery selector).
+
+```javascript
+var vis = d3.select($element.get(0)).append("svg")
+    .attr("width", diameter)
+    .attr("height", diameter)
+    .attr("class", "bubble");
+```
+
+The other thing we change is the data. In our case we don't need to load an external JSON file so we don't need to wrap the visualization code inside a ``d3.json`` call. Also we don't use the ``d3.scale.category10`` palette yet as all our circles will have the same color.
+
+The full code at this point [can be found here](https://github.com/datawrapper/tutorial-visualization/blob/4fcdffc8b8b83b618a27970b4437f22b64fea6bf/d3-bubble-chart/static/bubble-chart.js). However, if we test the chart in Datawrapper we will experience an error saying: *Uncaught ReferenceError: d3 is not defined*. Of course we need to tell Datawrapper that our visualization depends on the third-party library D3.js.
+
+### Declaring dependencies to third-party libraries
+
+To do so we do two things: First we download d3.min.js and [store it](https://github.com/datawrapper/tutorial-visualization/commit/81425a7221f0f5c008c98111c0e0f5478b21df46) under ``static/vendor/``.
+
+Second we need to tell Datawrapper that it needs to load the library with the chart. Therefor we [add the new attribute](https://github.com/datawrapper/tutorial-visualization/commit/e04e072f6248ab025952ed25ec004de39aaf414e) ``libraries`` to the visualization meta data we define in [plugin.php](https://github.com/datawrapper/tutorial-visualization/commit/e04e072f6248ab025952ed25ec004de39aaf414e). For each library we can provide two URLs, a local URL that is used in the Datawrapepr editor and a remote URL that will be used in the published chart.
+
+    "libraries" => array(array(
+        "local" => "vendor/d3.min.js",
+        "cdn" => "//cdnjs.cloudflare.com/ajax/libs/d3/3.3.11/d3.min.js"
+    )),
+
+After fixing the dependency the resulting chart should look something like this:
+
+![output](http://vis4.net/tmp/bubble-chart-1.png)
+
+### Fitting the visualization to the chart
+
+You might have noticed that at this point the visualization uses a fixed size, which is not what we want inside Datawrapper. 
+
+
 
 Plugin:
 
